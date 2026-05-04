@@ -85,7 +85,7 @@ export const CountryDetailModal = ({ open, onClose, result, input }: Props) => {
     name: m.label,
     yours: m.unit === "$" ? Math.min(m.yours, m.theirs * 3) : m.yours,
     theirs: m.theirs,
-    fill: m.verdict === "better" ? "hsl(158 64% 52%)" : m.verdict === "worse" ? "hsl(0 84% 60%)" : "hsl(43 96% 56%)",
+    fill: m.verdict === "better" ? "hsl(152 60% 42%)" : m.verdict === "worse" ? "hsl(0 72% 55%)" : "hsl(43 90% 55%)",
   }));
 
   const share = async () => {
@@ -122,9 +122,9 @@ export const CountryDetailModal = ({ open, onClose, result, input }: Props) => {
             <ResponsiveContainer>
               <BarChart data={chartData} layout="vertical" margin={{ left: 110 }}>
                 <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" stroke="hsl(220 9% 64%)" tick={{ fontSize: 12 }} />
+                <YAxis type="category" dataKey="name" stroke="hsl(222 14% 42%)" tick={{ fontSize: 12 }} />
                 <Tooltip
-                  contentStyle={{ background: "hsl(220 26% 12%)", border: "1px solid hsl(220 18% 22%)", borderRadius: 8 }}
+                  contentStyle={{ background: "hsl(0 0% 100%)", border: "1px solid hsl(36 22% 86%)", borderRadius: 8 }}
                   formatter={(v: any) => Math.round(v as number)}
                 />
                 <Bar dataKey="theirs" radius={[4, 4, 4, 4]}>

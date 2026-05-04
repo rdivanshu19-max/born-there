@@ -40,14 +40,14 @@ export const WorldMap = ({ results, homeIso2, onSelect }: Props) => {
               const score = result?.score ?? 0;
 
               const fill = isHome
-                ? "hsl(38 92% 50%)"
+                ? "hsl(28 88% 52%)"
                 : !result
-                  ? "hsl(220 18% 16%)"
-                  : score > 1 ? "hsl(158 64% 42%)"
-                  : score > 0 ? "hsl(158 64% 32%)"
-                  : score === 0 ? "hsl(43 96% 35%)"
-                  : score < -1 ? "hsl(0 70% 45%)"
-                  : "hsl(0 70% 35%)";
+                  ? "hsl(36 22% 88%)"
+                  : score > 1 ? "hsl(152 60% 38%)"
+                  : score > 0 ? "hsl(152 50% 55%)"
+                  : score === 0 ? "hsl(43 90% 60%)"
+                  : score < -1 ? "hsl(0 72% 50%)"
+                  : "hsl(0 65% 65%)";
 
               return (
                 <Geography
@@ -57,8 +57,8 @@ export const WorldMap = ({ results, homeIso2, onSelect }: Props) => {
                   onMouseEnter={() => setHovered(name)}
                   onMouseLeave={() => setHovered(null)}
                   style={{
-                    default: { fill, stroke: "hsl(222 47% 5%)", strokeWidth: 0.4, outline: "none" },
-                    hover:   { fill, stroke: "hsl(38 92% 60%)", strokeWidth: 0.8, outline: "none", cursor: result ? "pointer" : "default" },
+                    default: { fill, stroke: "hsl(0 0% 100%)", strokeWidth: 0.5, outline: "none" },
+                    hover:   { fill, stroke: "hsl(28 88% 40%)", strokeWidth: 1, outline: "none", cursor: result ? "pointer" : "default" },
                     pressed: { fill, outline: "none" },
                   }}
                 />
@@ -73,11 +73,11 @@ export const WorldMap = ({ results, homeIso2, onSelect }: Props) => {
         </div>
       )}
       <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-        <Legend color="hsl(38 92% 50%)" label="You" />
-        <Legend color="hsl(158 64% 42%)" label="Better outcome" />
-        <Legend color="hsl(43 96% 35%)" label="Similar" />
-        <Legend color="hsl(0 70% 45%)" label="Worse outcome" />
-        <Legend color="hsl(220 18% 16%)" label="Not in dataset" />
+        <Legend color="hsl(28 88% 52%)" label="Where you're from" />
+        <Legend color="hsl(152 60% 38%)" label="Better outcome" />
+        <Legend color="hsl(43 90% 60%)" label="Similar" />
+        <Legend color="hsl(0 72% 50%)" label="Worse outcome" />
+        <Legend color="hsl(36 22% 88%)" label="Not in dataset" />
       </div>
     </div>
   );
