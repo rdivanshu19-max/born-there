@@ -1,1 +1,10 @@
 project_id = "ecygedvfcgdbqjclyroj"
+
+[functions.country-narrative]
+verify_jwt = false
+
+[functions.compare-countries]
+verify_jwt = false
+
+[functions.daily-insight]
+verify_jwt = false

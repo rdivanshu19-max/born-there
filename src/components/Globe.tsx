@@ -29,13 +29,12 @@ export const Globe = ({ size = 520 }: { size?: number }) => {
         width={size}
         height={size}
         backgroundColor="rgba(0,0,0,0)"
-        globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
+        globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
         bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-        atmosphereColor="hsl(38, 92%, 60%)"
-        atmosphereAltitude={0.18}
+        atmosphereColor="hsl(28, 88%, 60%)"
+        atmosphereAltitude={0.22}
         showGraticules={false}
         animateIn
-        onGlobeReady={() => {}}
         ref={(g: any) => {
           if (g) {
             const c = g.controls?.();
@@ -61,9 +60,9 @@ const SvgGlobe = ({ size }: { size: number }) => (
     <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full">
       <defs>
         <radialGradient id="g" cx="35%" cy="35%">
-          <stop offset="0%" stopColor="hsl(38 92% 50%)" stopOpacity="0.9" />
-          <stop offset="60%" stopColor="hsl(220 40% 14%)" stopOpacity="1" />
-          <stop offset="100%" stopColor="hsl(222 47% 5%)" stopOpacity="1" />
+          <stop offset="0%" stopColor="hsl(38 95% 75%)" stopOpacity="1" />
+          <stop offset="55%" stopColor="hsl(28 88% 55%)" stopOpacity="0.95" />
+          <stop offset="100%" stopColor="hsl(18 60% 35%)" stopOpacity="1" />
         </radialGradient>
       </defs>
       <circle cx="100" cy="100" r="92" fill="url(#g)" />
@@ -75,8 +74,8 @@ const SvgGlobe = ({ size }: { size: number }) => (
           rx={92 - i * 0.5}
           ry={92 - i * 7.4}
           fill="none"
-          stroke="hsl(38 92% 60% / 0.15)"
-          strokeWidth="0.5"
+          stroke="hsl(0 0% 100% / 0.35)"
+          strokeWidth="0.6"
         />
       ))}
       {[...Array(7)].map((_, i) => (
@@ -86,7 +85,7 @@ const SvgGlobe = ({ size }: { size: number }) => (
           y1={100}
           x2={100 + 92 * Math.cos((i * Math.PI) / 7)}
           y2={100}
-          stroke="hsl(217 91% 68% / 0.12)"
+          stroke="hsl(0 0% 100% / 0.25)"
           strokeWidth="0.5"
         />
       ))}

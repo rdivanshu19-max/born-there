@@ -24,7 +24,7 @@ const App = () => (
     <HelmetProvider>
       <TooltipProvider>
         <Toaster />
-        <Sonner theme="dark" />
+        <Sonner />
         <BrowserRouter>
           <AuthProvider>
             <div className="flex flex-col min-h-screen">

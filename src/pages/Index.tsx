@@ -20,6 +20,8 @@ const Index = () => {
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
+        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/30 blur-3xl animate-drift pointer-events-none" />
+        <div className="absolute top-40 -right-32 h-96 w-96 rounded-full bg-secondary/20 blur-3xl animate-drift pointer-events-none" style={{ animationDelay: "3s" }} />
         <div className="container relative grid lg:grid-cols-2 gap-12 items-center py-20 md:py-28">
           <div className="space-y-7 animate-float-up">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
@@ -33,12 +35,12 @@ const Index = () => {
               But you can see how it would have changed everything. Step into your parallel lives across 50+ countries — guided by real data on income, health, education and happiness.
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
-              <Button asChild size="lg" className="bg-gradient-amber text-primary-foreground hover:opacity-90 shadow-glow-amber">
+              <Button asChild size="lg" className="bg-gradient-amber text-primary-foreground hover:opacity-90 shadow-glow-amber animate-pulse-glow">
                 <Link to="/simulator">
                   Discover your other lives <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-border/60">
+              <Button asChild size="lg" variant="outline" className="border-border">
                 <Link to="/explore">Explore countries</Link>
               </Button>
             </div>
