@@ -13,7 +13,9 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { SEO } from "@/components/SEO";
+import { Flag } from "@/components/Flag";
 import { COUNTRIES, simulate, type Education, type Gender, type SimulationInput } from "@/lib/simulator";
+import { getCurrency, fromLocalToUsd, fromUsdToLocal, formatLocal } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -24,8 +26,8 @@ const Simulator = () => {
 
   const [age, setAge] = useState(28);
   const [gender, setGender] = useState<Gender>("female");
-  const [countryIso2, setCountry] = useState("US");
-  const [income, setIncome] = useState(2500);
+  const [countryIso2, setCountry] = useState("IN");
+  const [incomeUsd, setIncomeUsd] = useState(500);
   const [education, setEducation] = useState<Education>("university");
   const [employed, setEmployed] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -35,15 +37,23 @@ const Simulator = () => {
     []
   );
 
+  const currency = getCurrency(countryIso2);
+  const localValue = Math.round(fromUsdToLocal(incomeUsd, countryIso2));
+  const setLocalValue = (local: number) => {
+    setIncomeUsd(Math.max(0, Math.round(fromLocalToUsd(local, countryIso2))));
+  };
+
   const onSimulate = async () => {
     setBusy(true);
     try {
-      const input: SimulationInput = { age, gender, countryIso2, monthlyIncomeUsd: income, education, employed };
+      const input: SimulationInput = { age, gender, countryIso2, monthlyIncomeUsd: incomeUsd, education, employed };
+      // Add a fresh seed so AI narratives stay variable for repeat runs
+      const seed = nanoid(8);
       const results = simulate(input);
       const slug = nanoid(10);
       const payload = {
         share_slug: slug,
-        input: input as any,
+        input: { ...input, seed } as any,
         results: results as any,
         top_country: results.topCountry?.name ?? null,
         is_public: true,
@@ -51,7 +61,6 @@ const Simulator = () => {
       };
       const { error } = await supabase.from("simulations").insert(payload);
       if (error) {
-        // Still allow navigating with localStorage fallback
         console.error(error);
         localStorage.setItem(`sim:${slug}`, JSON.stringify(payload));
       }
@@ -63,6 +72,8 @@ const Simulator = () => {
     }
   };
 
+  const homeCountry = COUNTRIES.find((c) => c.iso2 === countryIso2);
+
   return (
     <>
       <SEO
@@ -73,35 +84,38 @@ const Simulator = () => {
 
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
-        <div className="container relative py-14 md:py-20">
+        <div className="absolute -top-32 -left-32 h-80 w-80 rounded-full bg-primary/30 blur-3xl animate-float-blob pointer-events-none" />
+        <div className="absolute top-40 -right-32 h-80 w-80 rounded-full bg-accent/30 blur-3xl animate-float-blob pointer-events-none" style={{ animationDelay: "4s" }} />
+
+        <div className="container relative py-10 md:py-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center max-w-2xl mx-auto mb-10"
+            className="text-center max-w-2xl mx-auto mb-8 md:mb-10"
           >
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary mb-4">
               <Sparkles className="h-3 w-3" /> Tell us about your life
             </div>
-            <h1 className="font-display text-4xl md:text-5xl leading-tight mb-3">
+            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl leading-tight mb-3">
               Your <span className="text-gradient-amber italic">parallel lives</span><br/> begin here.
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm md:text-base">
               Six small inputs. A lifetime of perspective across 50+ countries.
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-[1fr_420px] gap-8 max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-[1fr_380px] gap-6 lg:gap-8 max-w-6xl mx-auto">
             {/* LEFT — form */}
             <motion.div
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="glass-strong rounded-3xl p-6 md:p-10 space-y-8"
+              className="glass-strong rounded-3xl p-5 md:p-10 space-y-7 md:space-y-8 order-2 lg:order-1"
             >
               {/* Age */}
               <div className="space-y-3">
                 <div className="flex items-baseline justify-between">
                   <Label className="text-base">Your age</Label>
-                  <span className="font-display text-3xl text-primary tabular-nums">{age}</span>
+                  <span className="font-display text-2xl md:text-3xl text-primary tabular-nums">{age}</span>
                 </div>
                 <Slider value={[age]} min={1} max={90} step={1} onValueChange={(v) => setAge(v[0])} />
               </div>
@@ -109,12 +123,12 @@ const Simulator = () => {
               {/* Gender */}
               <div className="space-y-3">
                 <Label className="text-base">Gender</Label>
-                <RadioGroup value={gender} onValueChange={(v) => setGender(v as Gender)} className="grid grid-cols-3 gap-3">
+                <RadioGroup value={gender} onValueChange={(v) => setGender(v as Gender)} className="grid grid-cols-3 gap-2 md:gap-3">
                   {(["female","male","nonbinary"] as Gender[]).map((g) => (
                     <label
                       key={g}
                       htmlFor={`g-${g}`}
-                      className={`flex items-center gap-2 cursor-pointer rounded-xl border px-4 py-3 transition-colors capitalize ${
+                      className={`flex items-center justify-center text-sm cursor-pointer rounded-xl border px-2 py-3 transition-colors capitalize text-center ${
                         gender === g ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40"
                       }`}
                     >
@@ -140,22 +154,31 @@ const Simulator = () => {
                 </Select>
               </div>
 
-              {/* Income */}
+              {/* Income — in local currency */}
               <div className="space-y-3">
-                <div className="flex items-baseline justify-between">
-                  <Label className="text-base">Monthly income (USD, PPP)</Label>
-                  <span className="font-display text-2xl text-primary tabular-nums">
-                    ${income.toLocaleString()}
+                <div className="flex items-baseline justify-between flex-wrap gap-2">
+                  <Label className="text-base">Monthly income ({currency.code})</Label>
+                  <span className="font-display text-xl md:text-2xl text-primary tabular-nums">
+                    {formatLocal(localValue, countryIso2)}
                   </span>
                 </div>
-                <Slider value={[income]} min={0} max={15000} step={50} onValueChange={(v) => setIncome(v[0])} />
-                <Input
-                  type="number"
+                <Slider
+                  value={[localValue]}
                   min={0}
-                  value={income}
-                  onChange={(e) => setIncome(Math.max(0, Number(e.target.value) || 0))}
-                  className="max-w-[180px]"
+                  max={Math.round(fromUsdToLocal(15000, countryIso2))}
+                  step={Math.max(1, Math.round(fromUsdToLocal(50, countryIso2)))}
+                  onValueChange={(v) => setLocalValue(v[0])}
                 />
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Input
+                    type="number"
+                    min={0}
+                    value={localValue}
+                    onChange={(e) => setLocalValue(Math.max(0, Number(e.target.value) || 0))}
+                    className="max-w-[200px]"
+                  />
+                  <span className="text-xs text-muted-foreground">≈ ${incomeUsd.toLocaleString()} USD</span>
+                </div>
               </div>
 
               {/* Education */}
@@ -195,27 +218,25 @@ const Simulator = () => {
             <motion.aside
               initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="space-y-4"
+              className="space-y-4 order-1 lg:order-2"
             >
-              <div className="glass rounded-3xl p-6 sticky top-24">
+              <div className="glass rounded-3xl p-5 md:p-6 lg:sticky lg:top-24">
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="text-5xl">
-                    {COUNTRIES.find((c) => c.iso2 === countryIso2)?.flag}
-                  </span>
-                  <div>
-                    <div className="text-xs uppercase tracking-wider text-muted-foreground">Your starting line</div>
-                    <div className="font-display text-2xl">
-                      {COUNTRIES.find((c) => c.iso2 === countryIso2)?.name}
+                  {homeCountry && <Flag iso2={homeCountry.iso2} emoji={homeCountry.flag} size={56} />}
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Your starting line</div>
+                    <div className="font-display text-xl md:text-2xl truncate">
+                      {homeCountry?.name}
                     </div>
                   </div>
                 </div>
                 <Stat label="Age" value={`${age} years old`} />
                 <Stat label="Gender" value={gender === "nonbinary" ? "Non-binary" : gender} />
-                <Stat label="Income" value={`$${income.toLocaleString()}/mo`} />
+                <Stat label="Income" value={`${formatLocal(localValue, countryIso2)}/mo`} />
                 <Stat label="Education" value={education} />
                 <Stat label="Employed" value={employed ? "Yes" : "No"} />
                 <p className="mt-5 text-xs text-muted-foreground italic leading-relaxed">
-                  We'll compare these to real-world data from 50+ countries — life expectancy, healthcare, income, happiness, gender equality and more.
+                  We'll compare these to real-world data from 50+ countries — life expectancy, healthcare, income, happiness, gender equality, culture and more.
                 </p>
               </div>
             </motion.aside>
@@ -227,9 +248,9 @@ const Simulator = () => {
 };
 
 const Stat = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex justify-between border-b border-border/60 last:border-0 py-2 text-sm capitalize">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="font-medium">{value}</span>
+  <div className="flex justify-between border-b border-border/60 last:border-0 py-2 text-sm capitalize gap-3">
+    <span className="text-muted-foreground shrink-0">{label}</span>
+    <span className="font-medium truncate text-right">{value}</span>
   </div>
 );
 
