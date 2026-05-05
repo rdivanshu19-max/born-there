@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, GitCompare, Sparkles, Loader2 } from "lucide-react";
+import { Search, GitCompare, Sparkles, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { SEO } from "@/components/SEO";
+import { Flag } from "@/components/Flag";
 import { COUNTRIES, type CountryData } from "@/lib/simulator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -54,6 +55,15 @@ const Explore = () => {
     } finally { setAiLoading(false); }
   };
 
+  const compareRows: Array<{ label: string; a: string; b: string; aHigher: boolean }> = a && b ? [
+    { label: "Life expectancy", a: `${Math.round((a.life_expectancy.male + a.life_expectancy.female)/2)} yrs`, b: `${Math.round((b.life_expectancy.male + b.life_expectancy.female)/2)} yrs`, aHigher: ((a.life_expectancy.male + a.life_expectancy.female) > (b.life_expectancy.male + b.life_expectancy.female)) },
+    { label: "Median income", a: `$${a.median_income_monthly_usd_ppp.toLocaleString()}/mo`, b: `$${b.median_income_monthly_usd_ppp.toLocaleString()}/mo`, aHigher: a.median_income_monthly_usd_ppp > b.median_income_monthly_usd_ppp },
+    { label: "Healthcare", a: `${a.healthcare_access_score}/100`, b: `${b.healthcare_access_score}/100`, aHigher: a.healthcare_access_score > b.healthcare_access_score },
+    { label: "Education", a: `${a.literacy_rate}%`, b: `${b.literacy_rate}%`, aHigher: a.literacy_rate > b.literacy_rate },
+    { label: "Gender equality", a: `${a.gender_equality_index}/100`, b: `${b.gender_equality_index}/100`, aHigher: a.gender_equality_index > b.gender_equality_index },
+    { label: "Happiness", a: `${a.happiness_score.toFixed(1)}/10`, b: `${b.happiness_score.toFixed(1)}/10`, aHigher: a.happiness_score > b.happiness_score },
+  ] : [];
+
   return (
     <>
       <SEO
@@ -64,44 +74,79 @@ const Explore = () => {
 
       <section className="relative">
         <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
-        <div className="container relative py-14 md:py-20">
+        <div className="absolute -top-32 -left-20 h-72 w-72 rounded-full bg-primary/30 blur-3xl animate-float-blob pointer-events-none" />
+        <div className="container relative py-10 md:py-20">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary mb-4">
               <Sparkles className="h-3 w-3" /> Browse the dataset
             </div>
-            <h1 className="font-display text-4xl md:text-6xl leading-tight mb-3">
+            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight mb-3">
               Every country, <span className="text-gradient-amber italic">a different life.</span>
             </h1>
-            <p className="text-muted-foreground text-lg">
-              Pick any two countries to compare them side-by-side. We'll have AI summarise the human story behind the data.
+            <p className="text-muted-foreground text-base md:text-lg">
+              Pick any two countries to compare them side-by-side — laws, freedoms, daily life. AI summarises the human story behind the data.
             </p>
           </motion.div>
 
           {/* COMPARE TRAY */}
-          <div className="mt-10 glass-strong rounded-3xl p-6 md:p-8 grid md:grid-cols-[1fr_auto_1fr_auto] gap-4 items-center">
-            <Slot c={a} placeholder="Pick country A" />
-            <GitCompare className="h-6 w-6 text-primary mx-auto hidden md:block" />
-            <Slot c={b} placeholder="Pick country B" />
+          <div className="mt-8 md:mt-10 glass-strong rounded-3xl p-4 md:p-8 grid md:grid-cols-[1fr_auto_1fr_auto] gap-3 md:gap-4 items-stretch">
+            <Slot c={a} placeholder="Pick country A" onClear={() => { setPickA(null); setAiSummary(""); }} />
+            <GitCompare className="h-6 w-6 text-primary mx-auto self-center hidden md:block" />
+            <Slot c={b} placeholder="Pick country B" onClear={() => { setPickB(null); setAiSummary(""); }} />
             <Button
               onClick={compare}
               disabled={!a || !b || aiLoading}
-              className="bg-gradient-amber text-primary-foreground hover:opacity-90 h-12"
+              className="bg-gradient-amber text-primary-foreground hover:opacity-90 h-12 md:h-auto"
             >
               {aiLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Comparing…</> : "Compare with AI"}
             </Button>
           </div>
 
+          {/* SIDE BY SIDE */}
+          {a && b && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 grid md:grid-cols-2 gap-4">
+              <div className="glass rounded-2xl p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <Flag iso2={a.iso2} emoji={a.flag} size={44} />
+                  <div className="font-display text-xl">{a.name}</div>
+                </div>
+                <ul className="space-y-2 text-sm">
+                  {compareRows.map((r) => (
+                    <li key={r.label} className="flex justify-between items-center border-b border-border/40 pb-1 last:border-0">
+                      <span className="text-muted-foreground">{r.label}</span>
+                      <span className={`font-medium ${r.aHigher ? "text-success" : "text-foreground/70"}`}>{r.a}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="glass rounded-2xl p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <Flag iso2={b.iso2} emoji={b.flag} size={44} />
+                  <div className="font-display text-xl">{b.name}</div>
+                </div>
+                <ul className="space-y-2 text-sm">
+                  {compareRows.map((r) => (
+                    <li key={r.label} className="flex justify-between items-center border-b border-border/40 pb-1 last:border-0">
+                      <span className="text-muted-foreground">{r.label}</span>
+                      <span className={`font-medium ${!r.aHigher ? "text-success" : "text-foreground/70"}`}>{r.b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </motion.div>
+          )}
+
           {(aiSummary || aiLoading) && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 glass rounded-2xl p-6">
-              <h3 className="font-display text-xl mb-2">{a?.name} vs {b?.name}</h3>
-              <p className="text-foreground/85 leading-relaxed whitespace-pre-wrap">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 glass-strong rounded-2xl p-5 md:p-6">
+              <h3 className="font-display text-lg md:text-xl mb-2 inline-flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> {a?.name} vs {b?.name}</h3>
+              <p className="text-foreground/85 leading-relaxed whitespace-pre-wrap text-sm md:text-base">
                 {aiSummary || "Generating an AI comparison…"}
               </p>
             </motion.div>
           )}
 
           {/* FILTERS */}
-          <div className="mt-12 grid md:grid-cols-[1fr_220px] gap-3">
+          <div className="mt-10 md:mt-12 grid md:grid-cols-[1fr_220px] gap-3">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -120,7 +165,7 @@ const Explore = () => {
           </div>
 
           {/* GRID */}
-          <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="mt-6 md:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
             {filtered.map((c, i) => {
               const selected = c.iso2 === pickA || c.iso2 === pickB;
               return (
@@ -131,15 +176,15 @@ const Explore = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ duration: 0.4, delay: Math.min(i * 0.02, 0.4) }}
-                  className={`text-left glass rounded-2xl p-5 transition-all hover:-translate-y-0.5 ${
-                    selected ? "border-primary ring-2 ring-primary/30 shadow-glow-amber" : ""
+                  className={`text-left glass rounded-2xl p-4 md:p-5 transition-all hover:-translate-y-0.5 hover:shadow-card ${
+                    selected ? "border-primary ring-2 ring-primary/40 shadow-glow-amber" : ""
                   }`}
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-4xl">{c.flag}</span>
+                    <Flag iso2={c.iso2} emoji={c.flag} size={40} />
                     <div className="min-w-0">
-                      <div className="font-display text-lg leading-tight truncate">{c.name}</div>
-                      <div className="text-xs text-muted-foreground">{c.continent}</div>
+                      <div className="font-display text-base md:text-lg leading-tight truncate">{c.name}</div>
+                      <div className="text-[11px] text-muted-foreground">{c.continent}</div>
                     </div>
                   </div>
                   <Mini label="Life expectancy" value={`${Math.round((c.life_expectancy.male + c.life_expectancy.female)/2)} yrs`} />
@@ -159,15 +204,18 @@ const Explore = () => {
   );
 };
 
-const Slot = ({ c, placeholder }: { c: CountryData | null; placeholder: string }) => (
-  <div className={`rounded-2xl border p-4 flex items-center gap-3 min-h-[80px] ${c ? "border-primary/40 bg-primary/5" : "border-dashed border-border"}`}>
+const Slot = ({ c, placeholder, onClear }: { c: CountryData | null; placeholder: string; onClear: () => void }) => (
+  <div className={`relative rounded-2xl border p-4 flex items-center gap-3 min-h-[80px] ${c ? "border-primary/40 bg-primary/5" : "border-dashed border-border"}`}>
     {c ? (
       <>
-        <span className="text-4xl">{c.flag}</span>
-        <div>
-          <div className="font-display text-lg">{c.name}</div>
+        <Flag iso2={c.iso2} emoji={c.flag} size={44} />
+        <div className="min-w-0">
+          <div className="font-display text-base md:text-lg truncate">{c.name}</div>
           <div className="text-xs text-muted-foreground">{c.continent}</div>
         </div>
+        <button onClick={onClear} aria-label="Remove" className="absolute top-2 right-2 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
+          <X className="h-4 w-4" />
+        </button>
       </>
     ) : (
       <span className="text-muted-foreground text-sm">{placeholder}</span>
@@ -176,9 +224,9 @@ const Slot = ({ c, placeholder }: { c: CountryData | null; placeholder: string }
 );
 
 const Mini = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="font-medium">{value}</span>
+  <div className="flex items-center justify-between text-xs py-1 border-b border-border/40 last:border-0 gap-2">
+    <span className="text-muted-foreground truncate">{label}</span>
+    <span className="font-medium whitespace-nowrap">{value}</span>
   </div>
 );
 

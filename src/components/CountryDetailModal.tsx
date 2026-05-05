@@ -3,8 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CountryResult, SimulationInput, getCountry } from "@/lib/simulator";
 import { Button } from "@/components/ui/button";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from "recharts";
-import { Share2, Loader2 } from "lucide-react";
+import { Share2, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { Flag } from "@/components/Flag";
+import { getCurrency, fromUsdToLocal, formatLocal } from "@/lib/currency";
 
 interface Props {
   open: boolean;
@@ -26,13 +28,14 @@ export const CountryDetailModal = ({ open, onClose, result, input }: Props) => {
       try {
         const home = getCountry(input.countryIso2);
         const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/country-narrative`;
+        const seed = (input as any).seed || Math.random().toString(36).slice(2, 10);
         const resp = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ country: result.country, homeCountry: home, input, metrics: result.metrics }),
+          body: JSON.stringify({ country: result.country, homeCountry: home, input, metrics: result.metrics, seed }),
         });
 
         if (!resp.ok || !resp.body) {
@@ -80,11 +83,12 @@ export const CountryDetailModal = ({ open, onClose, result, input }: Props) => {
 
   if (!result) return null;
   const { country, metrics } = result;
+  const localCurrency = getCurrency(country.iso2);
+  const localIncome = formatLocal(country.median_income_monthly_usd_ppp * localCurrency.perUsd, country.iso2);
 
   const chartData = metrics.map((m) => ({
     name: m.label,
-    yours: m.unit === "$" ? Math.min(m.yours, m.theirs * 3) : m.yours,
-    theirs: m.theirs,
+    theirs: m.unit === "$" ? Math.min(m.theirs, 5000) : m.theirs,
     fill: m.verdict === "better" ? "hsl(152 60% 42%)" : m.verdict === "worse" ? "hsl(0 72% 55%)" : "hsl(43 90% 55%)",
   }));
 
@@ -97,34 +101,37 @@ export const CountryDetailModal = ({ open, onClose, result, input }: Props) => {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl w-[95vw] max-h-[92vh] overflow-y-auto p-4 md:p-6">
         <DialogHeader>
-          <div className="flex items-center gap-4">
-            <span className="text-5xl" aria-hidden>{country.flag}</span>
-            <div>
-              <DialogTitle className="font-display text-3xl">{country.name}</DialogTitle>
-              <p className="text-sm text-muted-foreground">{country.continent}</p>
+          <div className="flex items-center gap-3 md:gap-4">
+            <Flag iso2={country.iso2} emoji={country.flag} size={56} />
+            <div className="min-w-0">
+              <DialogTitle className="font-display text-2xl md:text-3xl truncate">{country.name}</DialogTitle>
+              <p className="text-xs md:text-sm text-muted-foreground">{country.continent} · Median income {localIncome}/mo</p>
             </div>
           </div>
         </DialogHeader>
 
         <section className="mt-2">
-          <h3 className="font-display text-xl mb-2">If you were born in {country.name}, statistically...</h3>
-          <p className="text-foreground/90 leading-relaxed min-h-[6rem] whitespace-pre-wrap">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary mb-3">
+            <Sparkles className="h-3 w-3" /> AI life-story
+          </div>
+          <h3 className="font-display text-lg md:text-xl mb-2">If you were born in {country.name}, statistically...</h3>
+          <p className="text-foreground/90 leading-relaxed min-h-[6rem] whitespace-pre-wrap text-sm md:text-base">
             {narrative || (loading ? "" : "—")}
             {loading && <Loader2 className="inline-block h-4 w-4 ml-1 animate-spin text-primary" />}
           </p>
         </section>
 
         <section className="mt-6">
-          <h3 className="font-display text-lg mb-3">By the numbers</h3>
-          <div className="h-72">
+          <h3 className="font-display text-base md:text-lg mb-3">By the numbers</h3>
+          <div className="h-64 md:h-72 -mx-2">
             <ResponsiveContainer>
-              <BarChart data={chartData} layout="vertical" margin={{ left: 110 }}>
+              <BarChart data={chartData} layout="vertical" margin={{ left: 90, right: 16 }}>
                 <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" stroke="hsl(222 14% 42%)" tick={{ fontSize: 12 }} />
+                <YAxis type="category" dataKey="name" stroke="hsl(215 18% 42%)" tick={{ fontSize: 11 }} width={100} />
                 <Tooltip
-                  contentStyle={{ background: "hsl(0 0% 100%)", border: "1px solid hsl(36 22% 86%)", borderRadius: 8 }}
+                  contentStyle={{ background: "hsl(0 0% 100%)", border: "1px solid hsl(214 28% 88%)", borderRadius: 8 }}
                   formatter={(v: any) => Math.round(v as number)}
                 />
                 <Bar dataKey="theirs" radius={[4, 4, 4, 4]}>
@@ -136,8 +143,8 @@ export const CountryDetailModal = ({ open, onClose, result, input }: Props) => {
         </section>
 
         <div className="flex justify-end gap-2 mt-4">
-          <Button onClick={share} variant="outline">
-            <Share2 className="h-4 w-4 mr-2" /> Share this country
+          <Button onClick={share} variant="outline" size="sm">
+            <Share2 className="h-4 w-4 mr-2" /> Share
           </Button>
         </div>
       </DialogContent>

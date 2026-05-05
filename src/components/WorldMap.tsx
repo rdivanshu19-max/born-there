@@ -22,10 +22,10 @@ export const WorldMap = ({ results, homeIso2, onSelect }: Props) => {
     <div className="relative">
       <ComposableMap
         projection="geoEqualEarth"
-        projectionConfig={{ scale: 155 }}
+        projectionConfig={{ scale: 165 }}
         width={900}
-        height={420}
-        style={{ width: "100%", height: "auto" }}
+        height={440}
+        style={{ width: "100%", height: "auto", maxHeight: "70vh" }}
       >
         <Geographies geography={GEO_URL}>
           {({ geographies }) =>
